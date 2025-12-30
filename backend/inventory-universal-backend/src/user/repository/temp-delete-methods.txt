@@ -1,0 +1,209 @@
+Department Delete:
+    async deleteDepartment(userEmail: string, itemIndex: number){
+        await connectDB(this.dbPassword)
+
+        const user = await User.findOne({ email: userEmail })
+
+        if (!user){
+            throw new Error("User not found")
+        }
+
+        try {
+            await DepartmentManagement.findOneAndUpdate(
+                { userEmail },
+                { $unset: { "departments." + itemIndex: 1 } },
+                { new: true }
+            ).exec()
+
+            const updated = await DepartmentManagement.findOneAndUpdate(
+                { userEmail },
+                { $pull: { departments: null } },
+                { new: true }
+            ).exec()
+
+            return updated
+        } catch (err) {
+            throw err
+        }
+    }
+
+Supplier Delete:
+    async deleteSupplier(userEmail: string, itemIndex: number){
+        await connectDB(this.dbPassword)
+
+        const user = await User.findOne({ email: userEmail })
+
+        if (!user){
+            throw new Error("User not found")
+        }
+
+        try {
+            await SupplierManagement.findOneAndUpdate(
+                { userEmail },
+                { $unset: { "suppliers." + itemIndex: 1 } },
+                { new: true }
+            ).exec()
+
+            const updated = await SupplierManagement.findOneAndUpdate(
+                { userEmail },
+                { $pull: { suppliers: null } },
+                { new: true }
+            ).exec()
+
+            return updated
+        } catch (err) {
+            throw err
+        }
+    }
+
+Receivables Delete:
+    async deleteReceivable(userEmail: string, itemIndex: number){
+        await connectDB(this.dbPassword)
+
+        const user = await User.findOne({ email: userEmail })
+
+        if (!user){
+            throw new Error("User not found")
+        }
+
+        try {
+            await ReceivablesManagement.findOneAndUpdate(
+                { userEmail },
+                { $unset: { "receivables." + itemIndex: 1 } },
+                { new: true }
+            ).exec()
+
+            const updated = await ReceivablesManagement.findOneAndUpdate(
+                { userEmail },
+                { $pull: { receivables: null } },
+                { new: true }
+            ).exec()
+
+            return updated
+        } catch (err) {
+            throw err
+        }
+    }
+
+Creditors Delete:
+    async deleteCreditor(userEmail: string, itemIndex: number){
+        await connectDB(this.dbPassword)
+
+        const user = await User.findOne({ email: userEmail })
+
+        if (!user){
+            throw new Error("User not found")
+        }
+
+        try {
+            await CreditorsManagement.findOneAndUpdate(
+                { userEmail },
+                { $unset: { "creditors." + itemIndex: 1 } },
+                { new: true }
+            ).exec()
+
+            const updated = await CreditorsManagement.findOneAndUpdate(
+                { userEmail },
+                { $pull: { creditors: null } },
+                { new: true }
+            ).exec()
+
+            return updated
+        } catch (err) {
+            throw err
+        }
+    }
+
+Procurement Delete:
+    async deleteRequest(userEmail: string, itemIndex: number){
+        await connectDB(this.dbPassword)
+
+        const user = await User.findOne({ email: userEmail })
+
+        if (!user){
+            throw new Error("User not found")
+        }
+
+        try {
+            await ProcurementManagement.findOneAndUpdate(
+                { userEmail },
+                { $unset: { "requests." + itemIndex: 1 } },
+                { new: true }
+            ).exec()
+
+            const updated = await ProcurementManagement.findOneAndUpdate(
+                { userEmail },
+                { $pull: { requests: null } },
+                { new: true }
+            ).exec()
+
+            return updated
+        } catch (err) {
+            throw err
+        }
+    }
+
+User Delete:
+    async deleteUser(userEmail: string, itemIndex: number){
+        await connectDB(this.dbPassword)
+
+        const userInstance = await User.findOne({ email: userEmail })
+
+        if (!userInstance){
+            throw new Error("User not found")
+        }
+
+        try {
+            await UserManagement.findOneAndUpdate(
+                { userEmail },
+                { $unset: { "users." + itemIndex: 1 } },
+                { new: true }
+            ).exec()
+
+            const updated = await UserManagement.findOneAndUpdate(
+                { userEmail },
+                { $pull: { users: null } },
+                { new: true }
+            ).exec()
+
+            return updated
+        } catch (err) {
+            throw err
+        }
+    }
+
+Payment Delete:
+    async deletePayment(userEmail: string, paymentId: string){
+        await connectDB(this.dbPassword)
+
+        const user = await User.findOne({ email: userEmail })
+
+        if (!user){
+            throw new Error("User not found")
+        }
+
+        try {
+            const deleted = await Payment.findByIdAndDelete(paymentId).exec()
+            return deleted
+        } catch (err) {
+            throw err
+        }
+    }
+
+Customer Delete:
+    async deleteCustomer(userEmail: string, customerId: string){
+        await connectDB(this.dbPassword)
+
+        const user = await User.findOne({ email: userEmail })
+
+        if (!user){
+            throw new Error("User not found")
+        }
+
+        try {
+            const deleted = await Customer.findByIdAndDelete(customerId).exec()
+            return deleted
+        } catch (err) {
+            throw err
+        }
+    }
