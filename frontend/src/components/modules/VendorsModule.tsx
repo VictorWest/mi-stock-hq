@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
-import { Plus, Search, Phone, Mail, MapPin, TrendingUp, ShoppingCart } from 'lucide-react';
+import { Plus, Search, Phone, Mail, MapPin, TrendingUp, ShoppingCart, AlertTriangle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { useAppContext } from '@/contexts/AppContext';
 
 interface Supplier {
   id: string;
@@ -36,6 +37,7 @@ interface MarketPriceItem {
 
 const VendorsModule: React.FC = () => {
   const { toast } = useToast();
+  const { userRole } = useAppContext();
   const [suppliers, setSuppliers] = useState<Supplier[]>([
     {
       id: '1',
@@ -99,7 +101,7 @@ const VendorsModule: React.FC = () => {
     setSuppliers([...suppliers, supplier]);
     setNewSupplier({ name: '', contactPerson: '', phone: '', email: '', address: '', category: '' });
     setShowAddSupplier(false);
-    
+
     toast({ title: "Success", description: "Supplier added successfully." });
   };
 
@@ -107,6 +109,14 @@ const VendorsModule: React.FC = () => {
     toast({
       title: "Contact Request Sent",
       description: `Admin notified about ${item.name} from ${item.supplier}.`
+    });
+  };
+
+  const reportVendor = (supplierName: string) => {
+    toast({
+      title: "Report Submitted",
+      description: `Your complaint about ${supplierName} has been sent to the Superadmin.`,
+      variant: "destructive"
     });
   };
 
@@ -124,12 +134,14 @@ const VendorsModule: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Vendors & Suppliers</h2>
-          <p className="text-muted-foreground">Manage suppliers and track market prices</p>
+          <p className="text-slate-900">Manage suppliers and track market prices</p>
         </div>
-        <Button onClick={() => setShowAddSupplier(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Add Supplier
-        </Button>
+        {userRole === 'superadmin' && (
+          <Button onClick={() => setShowAddSupplier(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Supplier
+          </Button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -191,20 +203,27 @@ const VendorsModule: React.FC = () => {
                   <div className="flex justify-between items-start">
                     <div>
                       <h4 className="font-medium">{supplier.name}</h4>
-                      <p className="text-sm text-muted-foreground">{supplier.contactPerson}</p>
+                      <p className="text-sm text-slate-900">{supplier.contactPerson}</p>
                     </div>
-                    <Badge className={supplier.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                      {supplier.status.toUpperCase()}
-                    </Badge>
+                    <div className="flex gap-2">
+                      <Badge className={supplier.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                        {supplier.status.toUpperCase()}
+                      </Badge>
+                      {userRole === 'user' && (
+                        <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-red-500" onClick={() => reportVendor(supplier.name)} title="Report Vendor">
+                          <AlertTriangle className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <div className="space-y-1 text-sm">
+                  <div className="space-y-1 text-sm bg-gray-50 p-2 rounded">
                     <div className="flex items-center gap-2">
-                      <Phone className="h-3 w-3" />
-                      <span>{supplier.phone}</span>
+                      <Phone className="h-3 w-3 text-gray-500" />
+                      <span className="font-mono">{supplier.phone}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <Mail className="h-3 w-3" />
-                      <span>{supplier.email}</span>
+                      <Mail className="h-3 w-3 text-gray-500" />
+                      <span className="text-blue-600 underline cursor-pointer">{supplier.email}</span>
                     </div>
                   </div>
                   <Badge variant="outline">{supplier.category}</Badge>
@@ -227,7 +246,7 @@ const VendorsModule: React.FC = () => {
                     <div className="flex justify-between items-start">
                       <div>
                         <h4 className="font-medium">{item.name}</h4>
-                        <p className="text-sm text-muted-foreground">{item.supplier} - {item.location}</p>
+                        <p className="text-sm text-slate-900">{item.supplier} - {item.location}</p>
                       </div>
                       <Badge className={item.availability === 'in-stock' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}>
                         {item.availability.replace('-', ' ').toUpperCase()}
@@ -263,7 +282,7 @@ const VendorsModule: React.FC = () => {
                 <Label>Supplier Name *</Label>
                 <Input
                   value={newSupplier.name}
-                  onChange={(e) => setNewSupplier({...newSupplier, name: e.target.value})}
+                  onChange={(e) => setNewSupplier({ ...newSupplier, name: e.target.value })}
                   placeholder="Enter supplier name"
                 />
               </div>
@@ -271,7 +290,7 @@ const VendorsModule: React.FC = () => {
                 <Label>Contact Person *</Label>
                 <Input
                   value={newSupplier.contactPerson}
-                  onChange={(e) => setNewSupplier({...newSupplier, contactPerson: e.target.value})}
+                  onChange={(e) => setNewSupplier({ ...newSupplier, contactPerson: e.target.value })}
                   placeholder="Enter contact person"
                 />
               </div>
@@ -281,7 +300,7 @@ const VendorsModule: React.FC = () => {
                 <Label>Phone *</Label>
                 <Input
                   value={newSupplier.phone}
-                  onChange={(e) => setNewSupplier({...newSupplier, phone: e.target.value})}
+                  onChange={(e) => setNewSupplier({ ...newSupplier, phone: e.target.value })}
                   placeholder="Enter phone number"
                 />
               </div>
@@ -289,7 +308,7 @@ const VendorsModule: React.FC = () => {
                 <Label>Email</Label>
                 <Input
                   value={newSupplier.email}
-                  onChange={(e) => setNewSupplier({...newSupplier, email: e.target.value})}
+                  onChange={(e) => setNewSupplier({ ...newSupplier, email: e.target.value })}
                   placeholder="Enter email address"
                 />
               </div>
@@ -298,15 +317,15 @@ const VendorsModule: React.FC = () => {
               <Label>Address</Label>
               <Textarea
                 value={newSupplier.address}
-                onChange={(e) => setNewSupplier({...newSupplier, address: e.target.value})}
+                onChange={(e) => setNewSupplier({ ...newSupplier, address: e.target.value })}
                 placeholder="Enter full address"
               />
             </div>
             <div>
               <Label>Category</Label>
-              <select 
-                value={newSupplier.category} 
-                onChange={(e) => setNewSupplier({...newSupplier, category: e.target.value})}
+              <select
+                value={newSupplier.category}
+                onChange={(e) => setNewSupplier({ ...newSupplier, category: e.target.value })}
                 className="w-full border rounded px-3 py-2"
               >
                 <option value="">Select category</option>
@@ -329,5 +348,4 @@ const VendorsModule: React.FC = () => {
     </div>
   );
 };
-
 export default VendorsModule;

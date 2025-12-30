@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState } from 'react';
 
+export type UserRole = 'superadmin' | 'vendor' | 'user';
+
 interface AppContextType {
   sidebarOpen: boolean;
   toggleSidebar: () => void;
@@ -7,6 +9,10 @@ interface AppContextType {
   setSelectedIndustry: (industry: string) => void;
   companyName: string;
   setCompanyName: (name: string) => void;
+  userRole: UserRole;
+  setUserRole: (role: UserRole) => void;
+  user?: { email: string; fullName?: string; designation?: string } | null;
+  setUser: (user: any) => void;
 }
 
 const defaultAppContext: AppContextType = {
@@ -14,8 +20,12 @@ const defaultAppContext: AppContextType = {
   toggleSidebar: () => {},
   selectedIndustry: '',
   setSelectedIndustry: () => {},
-  companyName: 'Mi-Inventory Pro',
+  companyName: 'Mistock HQ',
   setCompanyName: () => {},
+  userRole: 'superadmin',
+  setUserRole: () => {},
+  user: null,
+  setUser: () => {}
 };
 
 const AppContext = createContext<AppContextType>(defaultAppContext);
@@ -25,7 +35,9 @@ export const useAppContext = () => useContext(AppContext);
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [selectedIndustry, setSelectedIndustry] = useState('');
-  const [companyName, setCompanyName] = useState('Mi-Inventory Pro');
+  const [companyName, setCompanyName] = useState('Mistock HQ');
+  const [userRole, setUserRole] = useState<UserRole>('superadmin');
+  const [user, setUser] = useState<any | null>(null);
 
   const toggleSidebar = () => {
     setSidebarOpen(prev => !prev);
@@ -40,6 +52,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setSelectedIndustry,
         companyName,
         setCompanyName,
+        userRole,
+        setUserRole,
+        user,
+        setUser
       }}
     >
       {children}

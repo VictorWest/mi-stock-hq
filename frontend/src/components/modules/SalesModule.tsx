@@ -10,7 +10,8 @@ import DirectSalesInterface from '@/components/sales/DirectSalesInterface';
 import PaymentModal from '@/components/sales/PaymentModal';
 import SalesReports from '@/components/sales/SalesReports';
 import { Separator } from '@/components/ui/separator';
-import { ShoppingCart, Receipt, BarChart3 } from 'lucide-react';
+import { ShoppingCart, Receipt, BarChart3, CheckCircle, CreditCard } from 'lucide-react';
+import { usePurchaseContext } from '@/contexts/PurchaseContext';
 
 interface SaleItem {
   id: string;
@@ -40,7 +41,8 @@ interface Sale {
 
 const SalesModule: React.FC = () => {
   const industryFeatures = useIndustryFeatures();
-  const { selectedDepartment, selectedIndustry } = useAppContext();
+  const { selectedDepartment, selectedIndustry, userRole } = useAppContext();
+  const { createRequest, requests, updateRequestStatus } = usePurchaseContext();
   const [currentSale, setCurrentSale] = useState<Sale>({
     id: `SALE-${Date.now()}`,
     items: [],
@@ -65,7 +67,7 @@ const SalesModule: React.FC = () => {
             <ShoppingCart className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
             <h3 className="text-lg font-semibold mb-2">Sales Module Not Available</h3>
             <p className="text-muted-foreground">
-              {!industryFeatures.hasSellingPrice 
+              {!industryFeatures.hasSellingPrice
                 ? 'This module is not enabled for your industry configuration.'
                 : 'This department is not configured for customer-facing sales.'}
             </p>
@@ -77,7 +79,7 @@ const SalesModule: React.FC = () => {
 
   const addItem = (item: any) => {
     const existingItem = currentSale.items.find(i => i.id === item.id);
-    
+
     if (existingItem && existingItem.status === 'active') {
       updateQuantity(item.id, existingItem.quantity + 1);
     } else {
@@ -90,7 +92,7 @@ const SalesModule: React.FC = () => {
         total: item.price,
         status: 'active'
       };
-      
+
       const updatedItems = [...currentSale.items, newItem];
       updateSale(updatedItems);
     }
@@ -101,13 +103,13 @@ const SalesModule: React.FC = () => {
       removeItem(itemId);
       return;
     }
-    
-    const updatedItems = currentSale.items.map(item => 
+
+    const updatedItems = currentSale.items.map(item =>
       item.id === itemId && item.status === 'active'
         ? { ...item, quantity: newQuantity, total: item.price * newQuantity }
         : item
     );
-    
+
     updateSale(updatedItems);
   };
 
@@ -120,7 +122,7 @@ const SalesModule: React.FC = () => {
     const activeItems = items.filter(item => item.status === 'active');
     const subtotal = activeItems.reduce((sum, item) => sum + item.total, 0);
     const total = subtotal - currentSale.discount;
-    
+
     setCurrentSale({
       ...currentSale,
       items,
@@ -130,12 +132,12 @@ const SalesModule: React.FC = () => {
   };
 
   const handleItemAction = (itemId: string, action: string, reason?: string) => {
-    const updatedItems = currentSale.items.map(item => 
-      item.id === itemId 
+    const updatedItems = currentSale.items.map(item =>
+      item.id === itemId
         ? { ...item, status: action as any, reason }
         : item
     );
-    
+
     updateSale(updatedItems);
   };
 
@@ -145,13 +147,13 @@ const SalesModule: React.FC = () => {
       status: 'completed',
       paymentMethod: paymentData.method
     };
-    
+
     handleSaleComplete(completedSale);
-    
+
     if (paymentData.printReceipt) {
       console.log('Printing receipt...');
     }
-    
+
     resetSale();
   };
 
@@ -170,6 +172,65 @@ const SalesModule: React.FC = () => {
       status: 'pending',
       timestamp: new Date()
     });
+  };
+
+  const renderPurchaseButton = () => {
+    const existingRequest = requests.find(r => r.id === currentSale.id);
+
+    if (!existingRequest) {
+      return (
+        <Button
+          className="w-full bg-blue-600 hover:bg-blue-700"
+          onClick={() => {
+            createRequest({
+              id: currentSale.id,
+              items: currentSale.items,
+              subtotal: currentSale.subtotal,
+              total: currentSale.total,
+              customerName: currentSale.customer
+            });
+          }}
+          disabled={currentSale.items.filter(i => i.status === 'active').length === 0}
+        >
+          <Receipt className="mr-2 h-4 w-4" />
+          Request Purchase
+        </Button>
+      );
+    }
+
+    if (existingRequest.status === 'pending') {
+      return (
+        <Button className="w-full" disabled variant="secondary">
+          <CheckCircle className="mr-2 h-4 w-4" />
+          Request Pending Approval
+        </Button>
+      );
+    }
+
+    if (existingRequest.status === 'unlocked') {
+      return (
+        <div className="space-y-2">
+          <div className="text-sm bg-green-50 p-2 text-green-700 rounded border border-green-200">
+            <strong>Payment Unlocked!</strong><br />
+            Includes Charges: ₦{existingRequest.charges.toFixed(2)}<br />
+            <strong>Total to Pay: ₦{(existingRequest.subtotal + existingRequest.charges).toFixed(2)}</strong>
+          </div>
+          <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => {
+            updateRequestStatus(existingRequest.id, 'paid');
+            handlePayment({ method: 'Paystack', printReceipt: true });
+          }}>
+            <CreditCard className="mr-2 h-4 w-4" />
+            Pay with Paystack
+          </Button>
+        </div>
+      );
+    }
+
+    return (
+      <Button className="w-full" disabled variant="outline">
+        Sale Completed
+      </Button>
+    );
   };
 
   // Render hospitality-specific interface for hospitality industry
@@ -265,16 +326,68 @@ const SalesModule: React.FC = () => {
                       <span>₦{currentSale.total.toFixed(2)}</span>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Button
-                      className="w-full"
-                      onClick={() => setIsPaymentModalOpen(true)}
-                      disabled={currentSale.items.filter(i => i.status === 'active').length === 0}
-                    >
-                      <Receipt className="mr-2 h-4 w-4" />
-                      Process Payment
-                    </Button>
+                    {userRole === 'user' ? (
+                      (() => {
+                        const existingRequest = requests.find(r => r.id === currentSale.id);
+                        return (
+                          <>
+                            {!existingRequest ? (
+                              <Button
+                                className="w-full bg-blue-600 hover:bg-blue-700"
+                                onClick={() => {
+                                  createRequest({
+                                    id: currentSale.id,
+                                    items: currentSale.items,
+                                    subtotal: currentSale.subtotal,
+                                    total: currentSale.total,
+                                    customerName: currentSale.customer
+                                  });
+                                }}
+                                disabled={currentSale.items.filter(i => i.status === 'active').length === 0}
+                              >
+                                <Receipt className="mr-2 h-4 w-4" />
+                                Request Purchase
+                              </Button>
+                            ) : existingRequest.status === 'pending' ? (
+                              <Button className="w-full" disabled variant="secondary">
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Request Pending Approval
+                              </Button>
+                            ) : existingRequest.status === 'unlocked' ? (
+                              <div className="space-y-2">
+                                <div className="text-sm bg-green-50 p-2 text-green-700 rounded border border-green-200">
+                                  <strong>Payment Unlocked!</strong><br />
+                                  Includes Charges: ₦{existingRequest.charges.toFixed(2)}<br />
+                                  <strong>Total to Pay: ₦{(existingRequest.subtotal + existingRequest.charges).toFixed(2)}</strong>
+                                </div>
+                                <Button className="w-full bg-green-600 hover:bg-green-700" onClick={() => {
+                                  updateRequestStatus(existingRequest.id, 'paid');
+                                  handlePayment({ method: 'Paystack', printReceipt: true });
+                                }}>
+                                  <CreditCard className="mr-2 h-4 w-4" />
+                                  Pay with Paystack
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button className="w-full" disabled variant="outline">
+                                Sale Completed
+                              </Button>
+                            )}
+                          </>
+                        );
+                      })()
+                    ) : (
+                      <Button
+                        className="w-full"
+                        onClick={() => setIsPaymentModalOpen(true)}
+                        disabled={currentSale.items.filter(i => i.status === 'active').length === 0}
+                      >
+                        <Receipt className="mr-2 h-4 w-4" />
+                        Process Payment (POS)
+                      </Button>
+                    )}
                     <Button
                       variant="outline"
                       className="w-full"

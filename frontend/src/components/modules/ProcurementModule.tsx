@@ -45,16 +45,16 @@ const ProcurementModule: React.FC = () => {
   const [editingRequest, setEditingRequest] = useState<ProcurementRequest | null>(null);
 
   const handleApprove = (id: string) => {
-    setRequests(prev => prev.map(req => 
-      req.id === id 
+    setRequests(prev => prev.map(req =>
+      req.id === id
         ? { ...req, status: 'Approved' as const, approvedBy: 'Super Admin', approvedDate: new Date().toISOString().split('T')[0] }
         : req
     ));
   };
 
   const handleReject = (id: string) => {
-    setRequests(prev => prev.map(req => 
-      req.id === id 
+    setRequests(prev => prev.map(req =>
+      req.id === id
         ? { ...req, status: 'Rejected' as const, approvedBy: 'Super Admin', approvedDate: new Date().toISOString().split('T')[0] }
         : req
     ));
@@ -74,7 +74,7 @@ const ProcurementModule: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Procurement Management</h2>
-          <p className="text-gray-600">Review and approve procurement requests</p>
+          <p className="text-slate-900">Review and approve procurement requests</p>
         </div>
       </div>
 

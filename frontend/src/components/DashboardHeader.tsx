@@ -2,7 +2,6 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Menu, Bell, User, Settings } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '@/contexts/AppContext';
 
 interface DashboardHeaderProps {
@@ -13,7 +12,6 @@ interface DashboardHeaderProps {
 
 const DashboardHeader: React.FC<DashboardHeaderProps> = ({ companyName, industry, planType }) => {
   const { toggleSidebar } = useAppContext();
-  const navigate = useNavigate();
 
   return (
     <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
@@ -37,7 +35,7 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({ companyName, industry
         <Button variant="ghost" size="sm">
           <Settings className="h-5 w-5" />
         </Button>
-        <Button variant="ghost" size="sm" onClick={() => navigate('/login')} aria-label="Account">
+        <Button variant="ghost" size="sm">
           <User className="h-5 w-5" />
         </Button>
       </div>

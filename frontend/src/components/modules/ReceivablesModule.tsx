@@ -85,9 +85,9 @@ const ReceivablesModule: React.FC = () => {
       if (r.id === selectedReceivable.id) {
         const updatedPaymentHistory = [...r.paymentHistory, newPayment];
         const totalPaid = updatedPaymentHistory.reduce((sum, p) => sum + p.amount, 0);
-        const newStatus = totalPaid >= r.originalAmount ? 'Fully Paid' : 
-                         totalPaid > 0 ? 'Partially Paid' : 'Unsettled';
-        
+        const newStatus = totalPaid >= r.originalAmount ? 'Fully Paid' :
+          totalPaid > 0 ? 'Partially Paid' : 'Unsettled';
+
         return {
           ...r,
           paymentHistory: updatedPaymentHistory,
@@ -116,14 +116,55 @@ const ReceivablesModule: React.FC = () => {
     }
   };
 
+  // ... Inside ReceivablesModule
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  const filteredReceivables = receivables.filter(r => {
+    const matchesSearch = r.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      r.cashierName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || r.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Receivables Management</h2>
-          <p className="text-gray-600">Track and manage customer debts and outstanding invoices</p>
+          <p className="text-slate-900">Track and manage customer debts and outstanding invoices</p>
         </div>
       </div>
+
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex gap-4 mb-4">
+            <div className="flex-1">
+              <Label htmlFor="search">Search</Label>
+              <Input
+                id="search"
+                placeholder="Search customer or cashier..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="w-[200px]">
+              <Label htmlFor="status">Filter by Status</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger id="status">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="Unsettled">Unsettled</SelectItem>
+                  <SelectItem value="Partially Paid">Partially Paid</SelectItem>
+                  <SelectItem value="Fully Paid">Fully Paid</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -144,7 +185,7 @@ const ReceivablesModule: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {receivables.map((receivable) => (
+              {filteredReceivables.map((receivable) => (
                 <React.Fragment key={receivable.id}>
                   <TableRow>
                     <TableCell className="font-medium">{receivable.cashierName}</TableCell>
@@ -157,15 +198,15 @@ const ReceivablesModule: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => setViewingHistory(receivable)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => {
                             setSelectedReceivable(receivable);
@@ -181,7 +222,7 @@ const ReceivablesModule: React.FC = () => {
                   {viewingHistory?.id === receivable.id && (
                     <TableRow>
                       <TableCell colSpan={7} className="p-0">
-                        <PaymentHistory 
+                        <PaymentHistory
                           payments={receivable.paymentHistory}
                           totalAmount={receivable.originalAmount}
                           remainingBalance={getRemainingBalance(receivable)}
@@ -205,7 +246,7 @@ const ReceivablesModule: React.FC = () => {
           <div className="space-y-4">
             <div>
               <Label>Customer: {selectedReceivable?.customerName}</Label>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-slate-900">
                 Outstanding Balance: ₦{selectedReceivable ? getRemainingBalance(selectedReceivable).toLocaleString() : 0}
               </p>
             </div>

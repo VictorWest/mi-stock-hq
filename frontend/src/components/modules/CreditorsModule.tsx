@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DollarSign, Eye } from 'lucide-react';
 import SettlementHistory from '@/components/creditors/SettlementHistory';
+import api from '@/lib/api'
 
 interface SettlementRecord {
   id: string;
@@ -27,29 +28,35 @@ interface Creditor {
   creationDate: string;
   status: 'Unpaid' | 'Partially Paid' | 'Fully Paid';
   settlementHistory: SettlementRecord[];
+  remainingBalance: number;
 }
 
+import { useAppContext } from '@/contexts/AppContext';
+
 const CreditorsModule: React.FC = () => {
-  const [creditors, setCreditors] = useState<Creditor[]>([
-    {
-      id: '1',
-      supplierName: 'ABC Food Supplies',
-      originalAmount: 50000,
-      creationDate: '2024-01-10',
-      status: 'Partially Paid',
-      settlementHistory: [
-        { id: '1', amount: 20000, date: '2024-01-15', method: 'Transfer', reference: 'TXN123456', recordedBy: 'Procurement Officer' }
-      ]
-    },
-    {
-      id: '2',
-      supplierName: 'XYZ Equipment Ltd',
-      originalAmount: 75000,
-      creationDate: '2024-01-12',
-      status: 'Unpaid',
-      settlementHistory: []
-    }
-  ]);
+  const { user } = useAppContext();
+  const [creditors, setCreditors] = useState<Creditor[]>([]);
+
+  useEffect(() => {
+    (async () => {
+      if (!user || !user.email) return;
+      try {
+        const data: any[] = await api.getCreditors(user.email);
+        const mapped = (data || []).map((c: any, idx: number) => ({
+          id: (c.supplierName || `c-${idx}`),
+          supplierName: c.supplierName,
+          originalAmount: c.originalAmount || 0,
+          creationDate: c.creationDate || '',
+          status: (c.status === 'paid') ? 'Fully Paid' : (c.status === 'partially paid' ? 'Partially Paid' : 'Unpaid'),
+          settlementHistory: [] as SettlementRecord[],
+          remainingBalance: c.remainingBalance !== undefined ? c.remainingBalance : (c.originalAmount || 0)
+        }));
+        setCreditors(mapped);
+      } catch (e) {
+        console.error('Failed to fetch creditors', e);
+      }
+    })();
+  }, [user]);
 
   const [selectedCreditor, setSelectedCreditor] = useState<Creditor | null>(null);
   const [paymentAmount, setPaymentAmount] = useState('');
@@ -64,46 +71,62 @@ const CreditorsModule: React.FC = () => {
   };
 
   const getRemainingBalance = (creditor: Creditor) => {
+    if (creditor.remainingBalance !== undefined) return creditor.remainingBalance;
     return creditor.originalAmount - getTotalPaid(creditor);
   };
 
-  const handleRecordPayment = () => {
-    if (!selectedCreditor || !paymentAmount || !paymentMethod) return;
+  const handleRecordPayment = async () => {
+    if (!selectedCreditor || !paymentAmount || !paymentMethod || !user || !user.email) return;
 
     const amount = parseFloat(paymentAmount);
-    const newSettlement: SettlementRecord = {
-      id: Date.now().toString(),
-      amount,
-      date: new Date().toISOString().split('T')[0],
-      method: paymentMethod as 'Cash' | 'POS' | 'Transfer' | 'Cheque',
-      reference: paymentReference || undefined,
-      recordedBy: 'Procurement Officer',
-      notes: paymentNotes || undefined
-    };
+    const dateStr = new Date().toISOString().split('T')[0];
 
-    const updatedCreditors = creditors.map(c => {
-      if (c.id === selectedCreditor.id) {
-        const updatedSettlementHistory = [...c.settlementHistory, newSettlement];
-        const totalPaid = updatedSettlementHistory.reduce((sum, s) => sum + s.amount, 0);
-        const newStatus = totalPaid >= c.originalAmount ? 'Fully Paid' : 
-                         totalPaid > 0 ? 'Partially Paid' : 'Unpaid';
-        
-        return {
-          ...c,
-          settlementHistory: updatedSettlementHistory,
-          status: newStatus as 'Unpaid' | 'Partially Paid' | 'Fully Paid'
-        };
-      }
-      return c;
-    });
+    // Compute new remaining balance
+    const totalPaidSoFar = selectedCreditor.settlementHistory.reduce((sum, s) => sum + s.amount, 0);
+    const previousRemaining = selectedCreditor.remainingBalance !== undefined ? selectedCreditor.remainingBalance : (selectedCreditor.originalAmount - totalPaidSoFar);
+    const newRemaining = Math.max(0, previousRemaining - amount);
 
-    setCreditors(updatedCreditors);
-    setIsSettling(false);
-    setPaymentAmount('');
-    setPaymentMethod('');
-    setPaymentReference('');
-    setPaymentNotes('');
-    setSelectedCreditor(null);
+    const statusBackend = newRemaining <= 0 ? 'paid' : 'partially paid';
+
+    try {
+      await api.updateCreditor(user.email, selectedCreditor.supplierName, { remainingBalance: newRemaining, status: statusBackend });
+
+      const newSettlement: SettlementRecord = {
+        id: Date.now().toString(),
+        amount,
+        date: dateStr,
+        method: paymentMethod as 'Cash' | 'POS' | 'Transfer' | 'Cheque',
+        reference: paymentReference || undefined,
+        recordedBy: user.fullName || user.email,
+        notes: paymentNotes || undefined
+      };
+
+      const updatedCreditors = creditors.map(c => {
+        if (c.id === selectedCreditor.id) {
+          const updatedSettlementHistory = [...c.settlementHistory, newSettlement];
+
+          const newStatus = statusBackend === 'paid' ? 'Fully Paid' : 'Partially Paid';
+
+          return {
+            ...c,
+            settlementHistory: updatedSettlementHistory,
+            status: newStatus as 'Unpaid' | 'Partially Paid' | 'Fully Paid',
+            remainingBalance: newRemaining
+          };
+        }
+        return c;
+      });
+
+      setCreditors(updatedCreditors);
+      setIsSettling(false);
+      setPaymentAmount('');
+      setPaymentMethod('');
+      setPaymentReference('');
+      setPaymentNotes('');
+      setSelectedCreditor(null);
+    } catch (e) {
+      console.error('Failed to record payment', e);
+    }
   };
 
   const getStatusBadge = (status: string) => {
@@ -117,14 +140,54 @@ const CreditorsModule: React.FC = () => {
     }
   };
 
+  // ... Inside CreditorsModule
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+
+  const filteredCreditors = creditors.filter(c => {
+    const matchesSearch = c.supplierName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || c.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold">Creditors Management</h2>
-          <p className="text-gray-600">Track and manage outstanding balances owed to suppliers</p>
+          <p className="text-slate-900">Track and manage outstanding balances owed to suppliers</p>
         </div>
       </div>
+
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex gap-4 mb-4">
+            <div className="flex-1">
+              <Label htmlFor="search">Search Supplier</Label>
+              <Input
+                id="search"
+                placeholder="Search supplier..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+            <div className="w-[200px]">
+              <Label htmlFor="status">Filter by Status</Label>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger id="status">
+                  <SelectValue placeholder="All Statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Statuses</SelectItem>
+                  <SelectItem value="Unpaid">Unpaid</SelectItem>
+                  <SelectItem value="Partially Paid">Partially Paid</SelectItem>
+                  <SelectItem value="Fully Paid">Fully Paid</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
@@ -144,7 +207,7 @@ const CreditorsModule: React.FC = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {creditors.map((creditor) => (
+              {filteredCreditors.map((creditor) => (
                 <React.Fragment key={creditor.id}>
                   <TableRow>
                     <TableCell className="font-medium">{creditor.supplierName}</TableCell>
@@ -156,15 +219,15 @@ const CreditorsModule: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => setViewingHistory(creditor)}
                         >
                           <Eye className="h-4 w-4" />
                         </Button>
-                        <Button 
-                          size="sm" 
+                        <Button
+                          size="sm"
                           variant="outline"
                           onClick={() => {
                             setSelectedCreditor(creditor);
@@ -180,7 +243,7 @@ const CreditorsModule: React.FC = () => {
                   {viewingHistory?.id === creditor.id && (
                     <TableRow>
                       <TableCell colSpan={6} className="p-0">
-                        <SettlementHistory 
+                        <SettlementHistory
                           settlements={creditor.settlementHistory}
                           totalAmount={creditor.originalAmount}
                           remainingBalance={getRemainingBalance(creditor)}
@@ -204,7 +267,7 @@ const CreditorsModule: React.FC = () => {
           <div className="space-y-4">
             <div>
               <Label>Supplier: {selectedCreditor?.supplierName}</Label>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-slate-900">
                 Outstanding Balance: ₦{selectedCreditor ? getRemainingBalance(selectedCreditor).toLocaleString() : 0}
               </p>
             </div>

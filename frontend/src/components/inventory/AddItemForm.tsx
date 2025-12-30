@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useIndustryFeatures } from '@/hooks/useIndustryConfig';
-import { Plus } from 'lucide-react';
+import { Plus, Image as ImageIcon, X } from 'lucide-react';
 
 interface AddItemFormProps {
   isOpen: boolean;
@@ -15,6 +15,7 @@ interface AddItemFormProps {
 
 const AddItemForm: React.FC<AddItemFormProps> = ({ isOpen, onClose, onAdd }) => {
   const industryFeatures = useIndustryFeatures();
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     sku: '',
     name: '',
@@ -25,13 +26,32 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ isOpen, onClose, onAdd }) => 
     stock: 0,
     expiry: '',
     batch: '',
-    barcode: ''
+    barcode: '',
+    image: ''
   });
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        setImagePreview(base64String);
+        setFormData({ ...formData, image: base64String });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImagePreview(null);
+    setFormData({ ...formData, image: '' });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.sku) return;
-    
+
     const newItem = {
       id: Date.now().toString(),
       ...formData,
@@ -39,7 +59,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ isOpen, onClose, onAdd }) => 
       expiry: industryFeatures.hasExpiryTracking ? formData.expiry : undefined,
       batch: industryFeatures.hasBatchTracking ? formData.batch : undefined
     };
-    
+
     onAdd(newItem);
     setFormData({
       sku: '',
@@ -51,25 +71,59 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ isOpen, onClose, onAdd }) => 
       stock: 0,
       expiry: '',
       batch: '',
-      barcode: ''
+      barcode: '',
+      image: ''
     });
+    setImagePreview(null);
     onClose();
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Add New Item</DialogTitle>
+          <DialogTitle>Add New Item & Image</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Image Upload Section */}
+          <div className="flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-lg bg-gray-50">
+            {imagePreview ? (
+              <div className="relative w-32 h-32">
+                <img src={imagePreview} alt="Preview" className="w-full h-full object-cover rounded-md" />
+                <button
+                  type="button"
+                  onClick={removeImage}
+                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <div className="text-center">
+                <ImageIcon className="mx-auto h-12 w-12 text-gray-400" />
+                <div className="mt-2">
+                  <Label htmlFor="image-upload" className="cursor-pointer text-blue-600 hover:text-blue-800">
+                    Upload Image
+                  </Label>
+                  <Input
+                    id="image-upload"
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleImageChange}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="sku">SKU *</Label>
               <Input
                 id="sku"
                 value={formData.sku}
-                onChange={(e) => setFormData({...formData, sku: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, sku: e.target.value })}
                 placeholder="Enter SKU"
                 required
               />
@@ -79,17 +133,17 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ isOpen, onClose, onAdd }) => 
               <Input
                 id="name"
                 value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Enter item name"
                 required
               />
             </div>
           </div>
-          
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label>Category</Label>
-              <Select value={formData.category} onValueChange={(value) => setFormData({...formData, category: value})}>
+              <Select value={formData.category} onValueChange={(value) => setFormData({ ...formData, category: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
@@ -102,7 +156,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ isOpen, onClose, onAdd }) => 
             </div>
             <div>
               <Label>Unit</Label>
-              <Select value={formData.unit} onValueChange={(value) => setFormData({...formData, unit: value})}>
+              <Select value={formData.unit} onValueChange={(value) => setFormData({ ...formData, unit: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select unit" />
                 </SelectTrigger>
@@ -114,7 +168,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ isOpen, onClose, onAdd }) => 
               </Select>
             </div>
           </div>
-          
+
           <div className="grid grid-cols-3 gap-4">
             <div>
               <Label htmlFor="costPrice">Cost Price</Label>
@@ -122,7 +176,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ isOpen, onClose, onAdd }) => 
                 id="costPrice"
                 type="number"
                 value={formData.costPrice}
-                onChange={(e) => setFormData({...formData, costPrice: Number(e.target.value)})}
+                onChange={(e) => setFormData({ ...formData, costPrice: Number(e.target.value) })}
                 placeholder="0.00"
               />
             </div>
@@ -133,7 +187,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ isOpen, onClose, onAdd }) => 
                   id="sellingPrice"
                   type="number"
                   value={formData.sellingPrice}
-                  onChange={(e) => setFormData({...formData, sellingPrice: Number(e.target.value)})}
+                  onChange={(e) => setFormData({ ...formData, sellingPrice: Number(e.target.value) })}
                   placeholder="0.00"
                 />
               </div>
@@ -144,12 +198,12 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ isOpen, onClose, onAdd }) => 
                 id="stock"
                 type="number"
                 value={formData.stock}
-                onChange={(e) => setFormData({...formData, stock: Number(e.target.value)})}
+                onChange={(e) => setFormData({ ...formData, stock: Number(e.target.value) })}
                 placeholder="0"
               />
             </div>
           </div>
-          
+
           {(industryFeatures.hasExpiryTracking || industryFeatures.hasBatchTracking) && (
             <div className="grid grid-cols-2 gap-4">
               {industryFeatures.hasBatchTracking && (
@@ -158,7 +212,7 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ isOpen, onClose, onAdd }) => 
                   <Input
                     id="batch"
                     value={formData.batch}
-                    onChange={(e) => setFormData({...formData, batch: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, batch: e.target.value })}
                     placeholder="Enter batch number"
                   />
                 </div>
@@ -170,13 +224,13 @@ const AddItemForm: React.FC<AddItemFormProps> = ({ isOpen, onClose, onAdd }) => 
                     id="expiry"
                     type="date"
                     value={formData.expiry}
-                    onChange={(e) => setFormData({...formData, expiry: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, expiry: e.target.value })}
                   />
                 </div>
               )}
             </div>
           )}
-          
+
           <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel

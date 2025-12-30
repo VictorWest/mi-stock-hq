@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import OnboardingModal from './OnboardingModal';
 import DashboardHeader from './DashboardHeader';
 import Sidebar from './Sidebar';
@@ -13,15 +13,19 @@ import UserManagementModule from './modules/UserManagementModule';
 import ProcurementModule from './modules/ProcurementModule';
 import CostCalculationModule from './modules/CostCalculationModule';
 import SubscriptionModule from './modules/SubscriptionModule';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import PurchaseRequestsModule from './modules/PurchaseRequestsModule';
+import SettingsModule from './modules/SettingsModule';
+import WorkerManagementModule from './modules/WorkerManagementModule';
+import ReportedVendorsModule from './modules/ReportedVendorsModule';
 import { Button } from '@/components/ui/button';
-import { Settings, Crown } from 'lucide-react';
+import { Settings } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 const AppLayout: React.FC = () => {
   const [showOnboarding, setShowOnboarding] = useState(true);
   const [selectedIndustry, setSelectedIndustry] = useState('');
   const [activeModule, setActiveModule] = useState('inventory');
-  const [companyName, setCompanyName] = useState('Mi-Inventory Pro');
+  const [companyName, setCompanyName] = useState('Mistock HQ');
 
   const handleIndustrySelect = (industry: string) => {
     setSelectedIndustry(industry);
@@ -53,33 +57,23 @@ const AppLayout: React.FC = () => {
         return <ReportsModule />;
       case 'subscription':
         return <SubscriptionModule />;
+      case 'purchase-requests':
+        return <PurchaseRequestsModule />;
+      case 'team':
+        return <WorkerManagementModule />;
+      case 'reported-vendors':
+        return <ReportedVendorsModule />;
       case 'settings':
-        return (
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Settings</h2>
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Settings className="h-5 w-5" />
-                  <span>System Configuration</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p>Configure your system settings, currency, tax rates, and more.</p>
-                <Button className="mt-4">Configure Settings</Button>
-              </CardContent>
-            </Card>
-          </div>
-        );
+        return <SettingsModule />;
       case 'upgrade':
         return <SubscriptionModule />;
       default:
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Dashboard</h2>
+            <h2 className="text-2xl font-bold text-slate-900">Dashboard</h2>
             <Card>
               <CardContent className="p-6">
-                <p>Welcome to Mi-Inventory Pro. Select a module from the sidebar to get started.</p>
+                <p className="text-slate-900">Welcome to Mistock HQ. Select a module from the sidebar to get started.</p>
               </CardContent>
             </Card>
           </div>
@@ -88,22 +82,22 @@ const AppLayout: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <OnboardingModal 
-        isOpen={showOnboarding} 
-        onIndustrySelect={handleIndustrySelect} 
+    <div className="min-h-screen bg-[#f0f9ff] bg-[radial-gradient(#e0f2fe_1px,transparent_1px)] [background-size:16px_16px]">
+      <OnboardingModal
+        isOpen={showOnboarding}
+        onIndustrySelect={handleIndustrySelect}
       />
-      
+
       <div className="flex h-screen">
         <Sidebar activeModule={activeModule} onModuleChange={setActiveModule} />
-        
+
         <div className="flex-1 flex flex-col overflow-hidden">
-          <DashboardHeader 
+          <DashboardHeader
             companyName={companyName}
             industry={selectedIndustry || 'General'}
             planType="Free Trial"
           />
-          
+
           <main className="flex-1 overflow-y-auto p-6">
             {renderModule()}
           </main>

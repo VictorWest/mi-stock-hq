@@ -6,9 +6,14 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import Index from "./pages/Index";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
 import NotFound from "./pages/NotFound";
+import PublicLayout from "./components/layout/PublicLayout";
+import HomePage from "./pages/public/HomePage";
+import VendorPage from "./pages/public/VendorPage";
+import StocksPage from "./pages/public/StocksPage";
+import { AboutPage, ContactPage, ServicesPage, TermsPage, DisclaimerPage } from "./pages/public/AuxiliaryPages";
+import { VerificationPage, ForgotPasswordPage } from "./pages/public/AuthPages";
+import { LoginPage, RegisterPage } from "./pages/public/LoginRegister";
 
 const queryClient = new QueryClient();
 
@@ -20,9 +25,26 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
+            {/* Public Routes */}
+            <Route element={<PublicLayout />}>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/vendors" element={<VendorPage />} />
+              <Route path="/stocks" element={<StocksPage />} />
+              <Route path="/about" element={<AboutPage />} />
+              <Route path="/contact" element={<ContactPage />} />
+              <Route path="/services" element={<ServicesPage />} />
+              <Route path="/terms" element={<TermsPage />} />
+              <Route path="/disclaimer" element={<DisclaimerPage />} />
+              <Route path="/verify" element={<VerificationPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            </Route>
+
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+
+            {/* Dashboard Route */}
+            <Route path="/dashboard" element={<Index />} />
+
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

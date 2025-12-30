@@ -6,8 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Search, Plus, Filter, Edit, Trash2 } from 'lucide-react';
+import { Search, Plus, Filter, Edit, Trash2, Image as ImageIcon } from 'lucide-react';
 import AddItemForm from './AddItemForm';
 import { useIndustryFeatures } from '@/hooks/useIndustryConfig';
 
@@ -22,6 +21,7 @@ interface InventoryItem {
   stock: number;
   status: 'in-stock' | 'out-of-stock' | 'low-stock';
   lastUpdated: Date;
+  image?: string;
 }
 
 const InventoryList: React.FC = () => {
@@ -118,7 +118,8 @@ const InventoryList: React.FC = () => {
       price: newItem.price,
       stock: newItem.stock || 0,
       status: newItem.stock > 10 ? 'in-stock' : newItem.stock > 0 ? 'low-stock' : 'out-of-stock',
-      lastUpdated: new Date()
+      lastUpdated: new Date(),
+      image: newItem.image
     };
     setItems(prev => [item, ...prev]);
     setIsAddFormOpen(false);
@@ -148,20 +149,15 @@ const InventoryList: React.FC = () => {
           <h3 className="text-xl font-semibold">Inventory Items</h3>
           <p className="text-muted-foreground">Manage and track your inventory items</p>
         </div>
-        <Dialog open={isAddFormOpen} onOpenChange={setIsAddFormOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Add New Item
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Add New Inventory Item</DialogTitle>
-            </DialogHeader>
-            <AddItemForm onSubmit={handleAddItem} />
-          </DialogContent>
-        </Dialog>
+        <Button onClick={() => setIsAddFormOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Add New Item
+        </Button>
+        <AddItemForm
+          isOpen={isAddFormOpen}
+          onClose={() => setIsAddFormOpen(false)}
+          onAdd={handleAddItem}
+        />
       </div>
 
       <Card>
@@ -186,7 +182,7 @@ const InventoryList: React.FC = () => {
                 />
               </div>
             </div>
-            
+
             <div>
               <Label htmlFor="category-filter">Filter by Category</Label>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -203,7 +199,7 @@ const InventoryList: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <Label htmlFor="supplier-filter">Filter by Supplier</Label>
               <Select value={supplierFilter} onValueChange={setSupplierFilter}>
@@ -220,7 +216,7 @@ const InventoryList: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <Label htmlFor="department-filter">Filter by Department</Label>
               <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
@@ -237,7 +233,7 @@ const InventoryList: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div>
               <Label htmlFor="status-filter">Filter by Status</Label>
               <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -252,7 +248,7 @@ const InventoryList: React.FC = () => {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="flex items-end">
               <Button
                 variant="outline"
@@ -283,6 +279,7 @@ const InventoryList: React.FC = () => {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[80px]">Image</TableHead>
                 <TableHead>SKU</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Category</TableHead>
@@ -297,6 +294,15 @@ const InventoryList: React.FC = () => {
             <TableBody>
               {filteredItems.map((item) => (
                 <TableRow key={item.id}>
+                  <TableCell>
+                    {item.image ? (
+                      <img src={item.image} alt={item.name} className="h-10 w-10 rounded object-cover border" />
+                    ) : (
+                      <div className="h-10 w-10 rounded bg-gray-100 flex items-center justify-center text-gray-400">
+                        <ImageIcon className="h-5 w-5" />
+                      </div>
+                    )}
+                  </TableCell>
                   <TableCell className="font-mono">{item.sku}</TableCell>
                   <TableCell className="font-medium">{item.name}</TableCell>
                   <TableCell>{item.category}</TableCell>
@@ -307,6 +313,7 @@ const InventoryList: React.FC = () => {
                   <TableCell>{getStatusBadge(item.status)}</TableCell>
                   <TableCell>
                     <div className="flex space-x-2">
+                      {/* Actions can include View Gallery later if multiple images are supported */}
                       <Button variant="outline" size="sm">
                         <Edit className="h-4 w-4" />
                       </Button>
@@ -319,7 +326,7 @@ const InventoryList: React.FC = () => {
               ))}
             </TableBody>
           </Table>
-          
+
           {filteredItems.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
               No items found matching your search criteria.
@@ -330,5 +337,4 @@ const InventoryList: React.FC = () => {
     </div>
   );
 };
-
 export default InventoryList;

@@ -37,7 +37,7 @@ const InventoryModule: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Inventory Management</h2>
-          <p className="text-gray-600">Manage your inventory items, settings, and configurations</p>
+          <p className="text-slate-900">Manage your inventory items, settings, and configurations</p>
         </div>
       </div>
 
@@ -68,11 +68,11 @@ const InventoryModule: React.FC = () => {
             Currency
           </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="inventory">
           <InventoryList />
         </TabsContent>
-        
+
         <TabsContent value="threshold">
           <Card>
             <CardHeader>
@@ -84,7 +84,7 @@ const InventoryModule: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="uom">
           <Card>
             <CardHeader>
@@ -96,7 +96,7 @@ const InventoryModule: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="writeoff">
           <Card>
             <CardHeader>
@@ -108,7 +108,7 @@ const InventoryModule: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="categories">
           <Card>
             <CardHeader>
@@ -120,7 +120,7 @@ const InventoryModule: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="currency">
           <Card>
             <CardHeader>
@@ -139,8 +139,8 @@ const InventoryModule: React.FC = () => {
                       {currencySymbol} - {currencies.find(c => c.code === baseCurrency)?.name}
                     </p>
                   </div>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     onClick={() => setIsEditingCurrency(!isEditingCurrency)}
                   >
                     <Settings className="h-4 w-4 mr-2" />
@@ -148,7 +148,7 @@ const InventoryModule: React.FC = () => {
                   </Button>
                 </div>
               </div>
-              
+
               {isEditingCurrency && (
                 <div className="space-y-4 p-4 border rounded-lg">
                   <div>
@@ -166,14 +166,14 @@ const InventoryModule: React.FC = () => {
                       </SelectContent>
                     </Select>
                   </div>
-                  
+
                   <div className="bg-yellow-50 p-3 rounded-md">
                     <p className="text-sm text-yellow-800">
-                      <strong>Warning:</strong> Changing the base currency will affect all pricing throughout the system. 
+                      <strong>Warning:</strong> Changing the base currency will affect all pricing throughout the system.
                       This action should only be performed by the Super Admin.
                     </p>
                   </div>
-                  
+
                   <div className="flex space-x-2">
                     <Button onClick={() => setIsEditingCurrency(false)} variant="outline">
                       Cancel

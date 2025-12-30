@@ -55,7 +55,7 @@ const UserManagementModule: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">User Management</h2>
-          <p className="text-gray-600">Manage system users and permissions (Super Admin only)</p>
+          <p className="text-slate-900">Manage system users and permissions (Super Admin only)</p>
         </div>
         <Dialog open={isAddingUser} onOpenChange={setIsAddingUser}>
           <DialogTrigger asChild>

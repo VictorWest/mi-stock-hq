@@ -6,9 +6,12 @@ import { AppProvider } from '@/contexts/AppContext';
 const Index: React.FC = () => {
   return (
     <AppProvider>
-      <AppLayout />
+      <PurchaseProvider>
+        <AppLayout />
+      </PurchaseProvider>
     </AppProvider>
   );
 };
+import { PurchaseProvider } from '@/contexts/PurchaseContext';
 
 export default Index;

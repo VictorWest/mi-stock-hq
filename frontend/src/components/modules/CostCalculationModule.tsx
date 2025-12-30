@@ -36,8 +36,8 @@ const CostCalculationModule: React.FC = () => {
 
   const departments = ['Kitchen', 'Bar', 'Administration', 'Store'];
 
-  const filteredItems = selectedDepartment === 'all' 
-    ? inventoryItems 
+  const filteredItems = selectedDepartment === 'all'
+    ? inventoryItems
     : inventoryItems.filter(item => item.department === selectedDepartment);
 
   const departmentSummaries: DepartmentSummary[] = departments.map(dept => {
@@ -57,7 +57,7 @@ const CostCalculationModule: React.FC = () => {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold">Cost Calculation</h2>
-          <p className="text-gray-600">Monitor daily inventory valuation and working capital</p>
+          <p className="text-slate-900">Monitor daily inventory valuation and working capital</p>
         </div>
         <div className="flex space-x-4">
           <Select value={selectedDepartment} onValueChange={setSelectedDepartment}>
@@ -92,7 +92,7 @@ const CostCalculationModule: React.FC = () => {
             <p className="text-xs text-muted-foreground">As of {selectedDate}</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Items</CardTitle>
@@ -103,7 +103,7 @@ const CostCalculationModule: React.FC = () => {
             <p className="text-xs text-muted-foreground">Inventory items</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Departments</CardTitle>
@@ -114,7 +114,7 @@ const CostCalculationModule: React.FC = () => {
             <p className="text-xs text-muted-foreground">Active departments</p>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Last Updated</CardTitle>
